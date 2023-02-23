@@ -29,6 +29,7 @@ public class Lexico implements java_cup.runtime.Scanner {
 			throw (new Error("Error: Bad input stream initializer."));
 		}
 		yy_reader = new java.io.BufferedReader(reader);
+		console.log("DevOps - Carlos Lemus");
 	}
 
 	public Lexico (java.io.InputStream instream) {
