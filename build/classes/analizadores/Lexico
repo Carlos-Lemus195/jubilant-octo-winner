@@ -1,0 +1,48 @@
+package analizadores;
+import java_cup.runtime.Symbol; 
+
+%% 
+%class Lexico
+%public 
+%line 
+%char 
+%cup 
+%unicode
+%ignorecase
+
+%init{ 
+    yyline = 1; 
+    yychar = 1; 
+%init} 
+
+BLANCOS=[ \r\t]+
+LineTerminator = \n
+ENTERO=[0-9]+
+REAL=([0-9]+)?"."[0-9]+
+PUNTODECIMAL = "."
+COMA = ","
+%%
+
+"(" {return new Symbol(sym.PARENTESIS_APERTURA,yyline,yychar, yytext());} 
+")" {return new Symbol(sym.PARENTESIS_CIERRE,yyline,yychar, yytext());} 
+
+"+" {return new Symbol(sym.SUMA,yyline,yychar, yytext());} 
+"-" {return new Symbol(sym.RESTA,yyline,yychar, yytext());} 
+"*" {return new Symbol(sym.MULTIPLICACION,yyline,yychar, yytext());} 
+"/" {return new Symbol(sym.DIVISION,yyline,yychar, yytext());}
+"^" {return new Symbol(sym.POTENCIA,yyline,yychar, yytext());}
+"$" {return new Symbol(sym.RAIZ,yyline,yychar, yytext());}
+{COMA} {return new Symbol(sym.COMA,yyline,yychar, yytext());}
+{PUNTODECIMAL} {return new Symbol(sym.PUNTODECIMAL,yyline,yychar, yytext());}
+{LineTerminator} {return new Symbol(sym.LineTerminator,yyline,yychar,yytext());}
+
+\n {yychar=1;}
+
+{BLANCOS} {}
+{ENTERO} {return new Symbol(sym.ENTERO,yyline,yychar, yytext());} 
+{REAL} {return new Symbol(sym.REAL,yyline,yychar, yytext());}
+
+. {
+    System.out.println("Este es un error lexico: "+yytext()+", en la linea: "
+    +yyline);
+}

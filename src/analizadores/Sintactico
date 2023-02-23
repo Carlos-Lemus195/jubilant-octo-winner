@@ -1,0 +1,124 @@
+package analizadores; 
+import java_cup.runtime.*;
+
+parser code 
+{:
+    /**
+     * Método al que se llama automáticamente ante algún error sintactico.
+     **/ 
+    public void syntax_error(Symbol s){
+        System.out.println("parse error/sintax error en la Línea " + (s.left) + ". No se esperaba este componente: " +s.value);
+    }
+
+    /**
+     * Método al que se llama automáticamente ante algún error sintáctico 
+     * en el que ya no es posible una recuperación de errores.
+     **/ 
+    public void unrecovered_syntax_error(Symbol s) throws java.lang.Exception{ 
+        System.out.println("Error irrecuperable en la Línea " + (s.left)+ ". Componente " + s.value + " no reconocido");
+    }
+:} 
+
+terminal String LineTerminator,PARENTESIS_APERTURA,PARENTESIS_CIERRE,COMA,PUNTODECIMAL;
+terminal String SUMA,RESTA,MULTIPLICACION,DIVISION,POTENCIA,RAIZ;
+terminal String ENTERO;
+terminal String REAL;
+terminal String NEGATIVO;
+
+non terminal INICIO;
+non terminal instrucciones_enteros;
+non terminal instrucciones_reales;
+non terminal instruccion_enteros;
+non terminal instruccion_reales;
+non terminal Integer expresion_enteros;
+non terminal Double expresion_reales;
+
+precedence left SUMA,RESTA;
+precedence left MULTIPLICACION,DIVISION;
+precedence left POTENCIA,RAIZ;
+precedence right NEGATIVO; 
+
+start with INICIO; 
+
+INICIO::= instrucciones_enteros | instrucciones_reales;
+
+instrucciones_enteros ::= 
+   instruccion_enteros instrucciones_enteros
+ | instruccion_enteros instrucciones_reales
+ | instruccion_enteros
+ | error instrucciones_enteros
+;
+
+instrucciones_reales ::= 
+   instruccion_reales instrucciones_reales
+ | instruccion_reales instrucciones_enteros
+ | instruccion_reales
+ | error instrucciones_reales
+;
+
+instruccion_enteros ::= 
+    expresion_enteros:a LineTerminator{:
+        if(a != null){
+            System.out.println("El valor de la expresión de tipo entero es: "+a);
+        }
+    :}
+    | LineTerminator {:System.out.println("Error Sintáctico -  Esta línea está vacía");:}
+;
+
+instruccion_reales ::= 
+   expresion_reales:a LineTerminator{:
+        if(a != null){
+        System.out.println("El valor de la expresión de tipo real es: "+a);
+        }
+    :}
+;
+
+expresion_enteros  ::=
+    ENTERO:a                                                                    {:RESULT=new Integer(a);:}
+ |  PARENTESIS_APERTURA expresion_enteros:a PARENTESIS_CIERRE                   {:RESULT=a;:}
+ |  RESTA expresion_enteros:a                                                   {:RESULT=a*-1;:}%prec NEGATIVO
+ |  expresion_enteros:a SUMA                       expresion_enteros:b          {:RESULT=a+b;:}
+ |  expresion_enteros:a SUMA                       expresion_reales:b           {:a=null; System.out.println("parser error");:}
+
+ |  expresion_enteros:a RESTA                      expresion_enteros:b          {:RESULT=a-b;:}
+ |  expresion_enteros:a RESTA                      expresion_reales:b           {:a=null; System.out.println("parser error");:}
+
+ |  expresion_enteros:a MULTIPLICACION             expresion_enteros:b          {:RESULT=a*b;:}
+ |  expresion_enteros:a MULTIPLICACION             expresion_reales:b           {:a=null; System.out.println("parser error");:}
+
+ |  expresion_enteros:a POTENCIA                   expresion_enteros:b          {:RESULT=(int)Math.pow(a,b);:}
+ |  expresion_enteros:a POTENCIA                   expresion_reales:b           {:a=null; System.out.println("parser error");:}
+
+ |                      RAIZ                       expresion_enteros:a          {:RESULT=(int)Math.sqrt(a);:}
+
+ |  expresion_enteros:a DIVISION                   expresion_enteros:b          {:a=null; System.out.println("parser error");:}
+ |  expresion_enteros:a DIVISION                   expresion_reales:b           {:a=null; System.out.println("parser error");:}
+
+ |  ENTERO:a            COMA                       ENTERO:b                     {:a=null; System.out.println("error morfológico - parser error/sintax error - Ha ocurrido un error morfológico, y eso ha generado un error sintáctico.");:}
+ |  ENTERO:a            COMA                                                    {:a=null; System.out.println("error morfológico - parser error/sintax error - Ha ocurrido un error morfológico, y eso ha generado un error sintáctico.");:}
+ |                      COMA                       ENTERO:a                     {:a=null; System.out.println("error morfológico - parser error/sintax error - Ha ocurrido un error morfológico, y eso ha generado un error sintáctico.");:}
+;
+
+expresion_reales  ::=
+    REAL:a                                                                      {:RESULT=new Double(a);:}
+ |  PARENTESIS_APERTURA expresion_reales:a PARENTESIS_CIERRE                    {:RESULT=a;:}
+ |  RESTA expresion_reales:a                                                    {:RESULT=a*-1;:}%prec NEGATIVO
+ |  expresion_reales:a  SUMA                      expresion_reales:b            {:RESULT=a+b;:}
+ |  expresion_reales:a  SUMA                      expresion_enteros:b           {:a=null; System.out.println("parser error");:}
+
+ |  expresion_reales:a  RESTA                     expresion_reales:b            {:RESULT=a-b;:}
+ |  expresion_reales:a  RESTA                     expresion_enteros:b           {:a=null; System.out.println("parser error");:} 
+
+ |  expresion_reales:a  MULTIPLICACION            expresion_reales:b            {:RESULT=a*b;:}
+ |  expresion_reales:a  MULTIPLICACION            expresion_enteros:b           {:a=null; System.out.println("parser error");:}
+
+ |  expresion_reales:a  DIVISION                  expresion_reales:b            {:RESULT=a/b;:}
+ |  expresion_reales:a  DIVISION                  expresion_enteros:b           {:a=null; System.out.println("parser error");:}
+
+ |                      RAIZ                      expresion_reales:a            {:a=null; System.out.println("parser error");:}
+
+ |  expresion_reales:a  POTENCIA                  expresion_reales:b            {:a=null; System.out.println("parser error");:}
+ |  expresion_reales:a  POTENCIA                  expresion_enteros:b           {:a=null; System.out.println("parser error");:}
+
+ |  ENTERO:a            PUNTODECIMAL                                            {:a=null; System.out.println("error morfológico - parser error/sintax error - Ha ocurrido un error morfológico, y eso ha generado un error sintáctico.");:}
+;
